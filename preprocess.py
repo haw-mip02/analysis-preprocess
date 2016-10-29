@@ -121,8 +121,8 @@ densities = [0.2, 0.35, 0.5]
 data = generate_and_process_test_tweets(n_samples=750, centers=centers, cluster_std=densities, random_state=0)
 
 # insert data into mongo
-# result = db.tweets.insert_many(data)
-# logging.debug("Inserted ids: %s", result.inserted_ids)
+result = db.tweets.insert_many(data)
+logging.debug("Inserted ids: %s", result.inserted_ids)
 
 
 
