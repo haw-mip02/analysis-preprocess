@@ -18,7 +18,7 @@ import numpy as np
 from datetime import datetime
 from faker import Factory
 from langid import classify
-from pymongo import MongoClient, GEO2D
+from pymongo import MongoClient, GEO2D, ASCENDING
 from sklearn.datasets.samples_generator import make_blobs
 from textblob import TextBlob as TextBlobEN
 from textblob_de import TextBlobDE
