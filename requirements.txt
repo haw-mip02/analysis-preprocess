@@ -1,0 +1,7 @@
+cython
+numpy
+scipy
+textblob-de
+langid
+faker
+pymongo

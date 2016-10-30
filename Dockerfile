@@ -2,16 +2,8 @@ FROM python:latest
 
 MAINTAINER Niklas Voss version: 0.1
 
-# requirements.txt doesn't work, because cython needs
-# to exist before all other packages and order of installation,
-# so install dependency one by one, other
-RUN pip install cython
-RUN pip install numpy
-RUN pip install scipy
-RUN pip install textblob-de
-RUN pip install langid
-RUN pip install faker
-RUN pip install pymongo
+ADD ./requirements.txt /tmp/requirements.txt
+RUN pip3 install -r /tmp/requirements.txt
 RUN python -m textblob.download_corpora
 
 ADD ./preprocess.py /opt/preprocess.py
