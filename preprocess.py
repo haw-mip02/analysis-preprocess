@@ -19,7 +19,7 @@ import numpy as np
 import requests
 from datetime import datetime, timedelta
 from langid import classify
-from pymongo import MongoClient, GEO2D, ASCENDING
+from pymongo import MongoClient, GEO2D, ASCENDING, bulk
 from textblob import TextBlob as TextBlobEN
 from textblob_de import TextBlobDE
 
@@ -41,7 +41,7 @@ def connect_to_and_setup_database():
 	while True:
 		try:
 			addr = os.getenv('MONGODB_PORT_27017_TCP_ADDR', 'localhost')
-			port = os.getenv('MONGODB_PORT_27017_TCP_PORT', '27018')
+			port = os.getenv('MONGODB_PORT_27017_TCP_PORT', '16018')
 			passwd = os.getenv('MONGODB_PASS', 'supertopsecret')
 			client = MongoClient('mongodb://analysis:' + passwd + '@' + addr + ':' + port + '/analysis')
 			db = client.analysis
@@ -55,7 +55,7 @@ def connect_to_and_setup_database():
 #
 def get_rest_get_via_timestamp_url():
 	addr = os.getenv('REST_PORT_3000_TCP_ADDR', 'localhost')
-	port = os.getenv('REST_PORT_3000_TCP_PORT', '3000')
+	port = os.getenv('REST_PORT_3000_TCP_PORT', '16300')
 	return 'http://' + addr + ':' + port + '/tweets/ts/'
 
 #
@@ -123,7 +123,7 @@ def preprocess_tweet(data):
 		loc[0] /= len(coords)
 		loc[1] /= len(coords)
 		# create tweet object 
-		tweet = { "tweet_id": data['_id'],
+		tweet = { "_id": data['_id'], # use same id
 				  "user": {
 				  	"name": data['user']['name'],
 				  	"screen_name": data['user']['screen_name'],
@@ -155,10 +155,15 @@ if __name__ == '__main__':
 			if len(raw_tweets) > 0:
 				last_access_time = datetime.utcnow()
 				processed_tweets = list(filter(None.__ne__, map(preprocess_tweet, raw_tweets)))
-				# insert data into mongo
-				result = db.tweets.insert_many(processed_tweets)
-				logging.debug("Inserted ids: %s", result.inserted_ids)
-			time.sleep(1)
+				# insert data into mongo using bulk
+				b = bulk.BulkOperationBuilder(db.tweets, ordered=False)
+				for t in processed_tweets:
+					b.find({ "_id": t['_id'] }).upsert().update_one({
+        				"$setOnInsert": t
+    				})
+				response = b.execute() # errors for duplicates are ignored
+				logging.debug("Bulk Response: %s", str(response))
+			time.sleep(5)
 		except RestConnectionException as error:
 			logging.warning(repr(error))
 
