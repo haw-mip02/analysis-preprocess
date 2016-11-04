@@ -44,6 +44,19 @@ def connect_to_and_setup_database():
 			logging.error(repr(error))
 			time.sleep(2) # wait with the retry, database is possibly starting up
 
+def get_rest_get_via_timestamp_url():
+	addr = os.getenv('REST_PORT_3000_TCP_ADDR', 'localhost')
+	port = os.getenv('REST_PORT_3000_TCP_PORT', '3000')
+	return 'http://' + addr + ':' + port + '/tweets/ts/'
+
+def get_new_tweets(url, newer_than_time):
+	res = requests.get(url + int(calendar.timegm(dt.utctimetuple()) * 1000))
+	if res.status_code == 200:
+		tweets = res.json()
+		return tweets if type(tweets) is list else list(tweets)
+	else:
+		raise Exception('Connection to tweetdb rest-service failed with status-code ' + res.status_code + ': ' + res.text)
+
 # basic tweet class, takes the raw tweet data and already preprocesses for a better internal representation
 def preprocess_tweet(data):
 	try:
@@ -88,16 +101,25 @@ def preprocess_tweet(data):
 					# check the word is of an allowed grammatical type
 					if kind[0] in ALLOWED_WORD_TOKENS: 
 						words.append(word)
-		# find out where the tweet came from
-		...
-		# save twitter metrics
-		...
+		# find out where the tweet came from by either taking existing coordinates
+		# or center of place
+		# TODO: check if coordinates exist before using place
+		# TODO: verify structure of place coordinates
+		coords = data.place.bounding_box.coordinates[0] 
+		loc = [0.0, 0.0]
+		for coord in coords:
+			loc[0] += coord[0]
+			loc[1] += coord[1]
+		loc[0] /= len(coords)
+		loc[1] /= len(coords)
 		# create tweet object 
 		tweet = { "author": author,
 				  "created_on": create_on,
 				  "words": words,
-				  "loc": [lat, lng],
-				  "polarity": polarity }
+				  "loc": loc,
+				  "polarity": polarity,
+				  "retweet_count": data.retweet_count,
+				  "favorite_count": data.favorite_count }
 		return tweet
 	except Exception as error: # catch exceptions, usually failed language detection
 		logging.warning(repr(error))
@@ -105,13 +127,18 @@ def preprocess_tweet(data):
 if __name__ == '__main__':
 	# connect to mongodb
 	client, db = connect_to_and_setup_database()
-
+	url = get_rest_get_via_timestamp_url()
+	last_access_time = datetime.utcnow() - 60*60*24
 	while True:
-		raw_tweets = get_new_tweets()
-		processed_tweets = list(map(preprocess_tweet, raw_tweets))
-		# insert data into mongo
-		result = db.tweets.insert_many(data)
-		logging.debug("Inserted ids: %s", result.inserted_ids)
+		try:
+			raw_tweets = get_new_tweets(url, last_access_time)
+			last_access_time = datetime.utcnow()
+			processed_tweets = list(map(preprocess_tweet, raw_tweets))
+			# insert data into mongo
+			result = db.tweets.insert_many(data)
+			logging.debug("Inserted ids: %s", result.inserted_ids)
+		except Exception as error:
+			logging.warning(repr(error))
 
 
 
