@@ -5,3 +5,4 @@ textblob-de
 langid
 faker
 pymongo
+requests
