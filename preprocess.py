@@ -71,7 +71,7 @@ def get_new_tweets(url, newer_than_time):
 # takes the raw tweet data and already preprocesses (includes sentiment analysis) for a better internal representation 
 def preprocess_tweet(data):
 	try:
-		created_at = time.strptime(data['created_at'],'%a %b %d %H:%M:%S +0000 %Y')
+		created_at = datetime.strptime(data['created_at'],'%a %b %d %H:%M:%S +0000 %Y')
 		# detect the language of the tweet or use predefined language
 		lang = classify(data['text'])[0] if not 'lang' in data else data['lang']
 		# tokenize the text dependent on the language
