@@ -45,7 +45,8 @@ def connect_to_and_setup_database():
 			passwd = os.getenv('MONGODB_PASS', 'supertopsecret')
 			client = MongoClient('mongodb://analysis:' + passwd + '@' + addr + ':' + port + '/analysis')
 			db = client.analysis
-			db.tweets.ensure_index([("loc", GEO2D), ("created_at", ASCENDING)])
+			db.tweets.ensure_index([("loc", GEO2D)])
+			db.tweets.ensure_index([("created_at", ASCENDING)])
 			logging.info("Connected to database: mongodb://%s:%s/analysis", addr, port)
 			return client, db
 		except Exception as error: 
@@ -70,7 +71,7 @@ def get_new_tweets(url, newer_than_time):
 # takes the raw tweet data and already preprocesses (includes sentiment analysis) for a better internal representation 
 def preprocess_tweet(data):
 	try:
-		created_at = time.strftime('%Y-%m-%d %H:%M:%S', time.strptime(data['created_at'],'%a %b %d %H:%M:%S +0000 %Y'))
+		created_at = time.strptime(data['created_at'],'%a %b %d %H:%M:%S +0000 %Y')
 		# detect the language of the tweet or use predefined language
 		lang = classify(data['text'])[0] if not 'lang' in data else data['lang']
 		# tokenize the text dependent on the language
@@ -147,7 +148,7 @@ if __name__ == '__main__':
 	# connect to mongodb, get rest url and setup last_access_time
 	client, db = connect_to_and_setup_database()
 	url = get_rest_get_via_timestamp_url()
-	last_access_time = datetime.utcnow() - timedelta(days=1)
+	last_access_time = datetime.utcnow() - timedelta(days=7)
 	# always try to get new tweets and process them
 	while True: 
 		try:
