@@ -8,6 +8,5 @@ RUN pip3 install hdbscan # needs to be installed separately
 RUN python -m textblob.download_corpora
 
 ADD ./preprocess.py /opt/preprocess.py
-ADD ./exampletext.txt /opt/exampletext.txt
 
 CMD ["python", "/opt/preprocess.py"]
