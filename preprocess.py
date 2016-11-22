@@ -43,6 +43,7 @@ def connect_to_and_setup_database():
 			addr = os.getenv('MONGODB_PORT_27017_TCP_ADDR', 'localhost')
 			port = os.getenv('MONGODB_PORT_27017_TCP_PORT', '16018')
 			passwd = os.getenv('MONGODB_PASS', 'supertopsecret')
+			logging.warn(os.environ.get('MONGODB_PASS') + ' - ' + os.getenv('MONGODB_PASS', 'FUCK'))
 			client = MongoClient('mongodb://analysis:' + passwd + '@' + addr + ':' + port + '/analysis')
 			db = client.analysis
 			db.tweets.ensure_index([("loc", GEO2D)])
