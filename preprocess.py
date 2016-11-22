@@ -148,7 +148,7 @@ if __name__ == '__main__':
 	# connect to mongodb, get rest url and setup last_access_time
 	client, db = connect_to_and_setup_database()
 	url = get_rest_get_via_timestamp_url()
-	last_access_time = datetime.utcnow() - timedelta(days=1)
+	last_access_time = datetime.utcnow() - timedelta(minutes=5)
 	# always try to get new tweets and process them
 	while True: 
 		try:
