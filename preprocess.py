@@ -107,7 +107,7 @@ def preprocess_tweet(data):
 			# TODO: special behaviour for hashtag is possibly also necessary for @
 			if word[0] == '#': # special case means next word is a hashtag
 				is_hashtag = True
-			elif word[0] == '@'
+			elif word[0] == '@':
 				is_tagged_user = True
 			else:
 				if is_hashtag: # previous word was a hashtag, so remerge with # and save
