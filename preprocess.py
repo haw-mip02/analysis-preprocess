@@ -28,7 +28,7 @@ from textblob_de import TextBlobDE
 logging.basicConfig(format='%(asctime)s [%(levelname)s]: %(message)s', level=logging.DEBUG)
 
 # TODO: possibly others? see: http://www.ling.upenn.edu/courses/Fall_2003/ling001/penn_treebank_pos.html
-ALLOWED_WORD_TOKENS = { 'N', 'J', 'V' }
+ALLOWED_WORD_TOKENS = { 'N', 'J', 'V', 'F', 'R' }
 
 # Custom exceptions
 class RestConnectionException(Exception):
@@ -74,12 +74,14 @@ def preprocess_tweet(data):
 		created_at = datetime.strptime(data['created_at'],'%a %b %d %H:%M:%S +0000 %Y')
 		# detect the language of the tweet or use predefined language
 		lang = classify(data['text'])[0] if not 'lang' in data else data['lang']
+		# remove urls using Imme Emosol regex: https://mathiasbynens.be/demo/url-regex
+		text = re.sub(r'^(?:(?:https?|ftp)://)(?:\S+(?::\S*)?@)?(?:(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:/[^\s]*)?$', '', data['text'], flags=re.MULTILINE)
 		# tokenize the text dependent on the language
 		blob = None
 		if lang == 'en':
-			blob = TextBlobEN(data['text'])
+			blob = TextBlobEN(text)
 		elif lang == 'de':
-			blob = TextBlobDE(data['text'])
+			blob = TextBlobDE(text)
 		else: # avoid unknown languages
 			raise UnknownLanguageException('Unknown language: ' + data['text'])
 		# get the polarity of the tweet sentences and summerize them
@@ -98,16 +100,22 @@ def preprocess_tweet(data):
 		# extract _important_ words from the word tokens
 		words = []
 		is_hashtag = False
+		is_tagged_user = False
 		for tag in blob.tags:
 			word = tag[0]
 			kind = tag[1]
 			# TODO: special behaviour for hashtag is possibly also necessary for @
 			if word[0] == '#': # special case means next word is a hashtag
 				is_hashtag = True
+			elif word[0] == '@':
+				is_tagged_user = True
 			else:
 				if is_hashtag: # previous word was a hashtag, so remerge with # and save
 					words.append("#" + word)
 					is_hashtag = False
+				if is_tagged_user:
+					words.append("@" + word)
+					is_tagged_user = False
 				else: # just normal word of the tweet
 					# check the word is of an allowed grammatical type
 					if kind[0] in ALLOWED_WORD_TOKENS: 
@@ -116,7 +124,13 @@ def preprocess_tweet(data):
 		# or center of place
 		# TODO: check if coordinates exist before using place
 		# TODO: verify structure of place coordinates
-		coords = data['place']['bounding_box']['coordinates'][0] 
+		coords = []
+		if data['geo']:
+			coords = data['geo']['coordinates']
+		elif data['coordinates']:
+			coords = data['coordinates']['coordinates']
+		else:
+			coords = data['place']['bounding_box']['coordinates'][0] 
 		loc = [0.0, 0.0]
 		for coord in coords:
 			loc[0] += coord[0]
@@ -148,7 +162,7 @@ if __name__ == '__main__':
 	# connect to mongodb, get rest url and setup last_access_time
 	client, db = connect_to_and_setup_database()
 	url = get_rest_get_via_timestamp_url()
-	last_access_time = datetime.utcnow() - timedelta(minutes=5)
+	last_access_time = datetime.utcnow()
 	# always try to get new tweets and process them
 	while True: 
 		try:
