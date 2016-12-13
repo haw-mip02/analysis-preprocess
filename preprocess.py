@@ -23,6 +23,7 @@ from langid import classify
 from pymongo import MongoClient, GEO2D, ASCENDING, bulk
 from textblob import TextBlob as TextBlobEN
 from textblob_de import TextBlobDE
+from json.decoder import JSONDecodeError
 
 # Sensible logging format
 # TODO: proper setup for debug and release mode
@@ -64,7 +65,10 @@ def get_rest_get_via_timestamp_url():
 def get_new_tweets(url, newer_than_time):
 	res = requests.get(url + str(int(calendar.timegm(newer_than_time.utctimetuple()) * 1000)))
 	if res.status_code == 200:
-		tweets = res.json()
+		try:
+			tweets = res.json()
+		except JSONDecodeError as error: 
+			raise RestConnectionException('Unable to parse response from rest service with status-code ' + res.status_code + ': ' + res.text)
 		return tweets if type(tweets) is list else list(tweets)
 	else:
 		raise RestConnectionException('Connection to tweetdb rest-service failed with status-code ' + res.status_code + ': ' + res.text)
