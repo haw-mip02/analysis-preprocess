@@ -16,6 +16,7 @@ import random
 import os
 import logging
 import numpy as np
+import re
 import requests
 from datetime import datetime, timedelta
 from langid import classify
