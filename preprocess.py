@@ -80,7 +80,7 @@ def preprocess_tweet(data):
 		# detect the language of the tweet or use predefined language
 		lang = classify(data['text'])[0] if not 'lang' in data else data['lang']
 		# remove urls using Imme Emosol regex: https://mathiasbynens.be/demo/url-regex
-		text = re.sub(r'^(?:(?:https?|ftp)://)(?:\S+(?::\S*)?@)?(?:(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:/[^\s]*)?$', '', data['text'], flags=re.MULTILINE)
+		text = re.sub(r'^https?:\/\/.*[\r\n]*', '', data['text'], flags=re.MULTILINE)
 		# tokenize the text dependent on the language
 		blob = None
 		if lang == 'en':
