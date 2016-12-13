@@ -131,9 +131,9 @@ def preprocess_tweet(data):
 		# TODO: verify structure of place coordinates
 		coords = []
 		if data['geo']:
-			coords = data['geo']['coordinates']
+			coords.append(data['geo']['coordinates'])
 		elif data['coordinates']:
-			coords = data['coordinates']['coordinates']
+			coords.append(data['coordinates']['coordinates'])
 		else:
 			coords = data['place']['bounding_box']['coordinates'][0] 
 		loc = [0.0, 0.0]
