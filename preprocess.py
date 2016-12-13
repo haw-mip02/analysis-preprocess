@@ -68,10 +68,10 @@ def get_new_tweets(url, newer_than_time):
 		try:
 			tweets = res.json()
 		except JSONDecodeError as error: 
-			raise RestConnectionException('Unable to parse response from rest service with status-code ' + res.status_code + ': ' + res.text)
+			raise RestConnectionException('Unable to parse response from rest service with status-code ' + str(res.status_code) + ': ' + res.text)
 		return tweets if type(tweets) is list else list(tweets)
 	else:
-		raise RestConnectionException('Connection to tweetdb rest-service failed with status-code ' + res.status_code + ': ' + res.text)
+		raise RestConnectionException('Connection to tweetdb rest-service failed with status-code ' + str(res.status_code) + ': ' + res.text)
 
 # takes the raw tweet data and already preprocesses (includes sentiment analysis) for a better internal representation 
 def preprocess_tweet(data):
