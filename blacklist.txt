@@ -7,3 +7,6 @@ n't
 ..
 ...
 amp
+is
+be
+i
