@@ -32,6 +32,12 @@ logging.basicConfig(format='%(asctime)s [%(levelname)s]: %(message)s', level=log
 # TODO: possibly others? see: http://www.ling.upenn.edu/courses/Fall_2003/ling001/penn_treebank_pos.html
 ALLOWED_WORD_TOKENS = { 'N', 'J', 'V', 'F', 'R' }
 
+#
+BLACKLIST = []
+with open('blacklist.txt' if os.path.isfile('blacklist.txt') else '/opt/blacklist.txt') as f:
+    for line in f:
+    	BLACKLIST.append(line)
+
 # Custom exceptions
 class RestConnectionException(Exception):
 	pass
@@ -118,9 +124,11 @@ def preprocess_tweet(data):
 				if is_hashtag: # previous word was a hashtag, so remerge with # and save
 					words.append("#" + word)
 					is_hashtag = False
-				if is_tagged_user:
+				elif is_tagged_user:
 					words.append("@" + word)
 					is_tagged_user = False
+				elif any(word == s for s in BLACKLIST):
+					continue
 				else: # just normal word of the tweet
 					# check the word is of an allowed grammatical type
 					if kind[0] in ALLOWED_WORD_TOKENS: 
